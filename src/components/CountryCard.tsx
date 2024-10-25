@@ -1,23 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_COUNTRIES } from "../graphql/queries";
-import { Country } from "../types/types";
+import { Country, UnsplashImage } from "../types/types";
 import { X, Search, ChevronDown } from "lucide-react";
 
 const UNSPLASH_ACCESS_KEY = "OXfJlrHssvKavR0Dj7UKnnLK0tRacGT5zDhGDooOclQ";
-
-interface UnsplashImage {
-  urls: {
-    regular: string;
-  };
-  alt_description: string;
-  user: {
-    name: string;
-    links: {
-      html: string;
-    };
-  };
-}
 
 const CountryCard: React.FC = () => {
   const { data, loading, error } = useQuery(GET_COUNTRIES);
