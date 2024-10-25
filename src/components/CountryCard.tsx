@@ -73,12 +73,12 @@ const CountryCard: React.FC = () => {
     }
   };
 
-  const continents = useMemo(() => {
+  const continents = useMemo((): string[] => {
     if (!data?.countries) return [];
-    const uniqueContinents = new Set(
+    const uniqueContinents: Set<string> = new Set(
       data.countries.map((country: Country) => country.continent.name)
     );
-    return Array.from(uniqueContinents);
+    return Array.from(uniqueContinents) as string[];
   }, [data]);
 
   const filteredCountries = useMemo(() => {
@@ -103,7 +103,7 @@ const CountryCard: React.FC = () => {
     setSelectedCountry(null);
   };
 
-  const handleContinentSelect = (continent: string) => {
+  const handleContinentSelect = (continent: string): void => {
     setSelectedContinent(continent);
   };
 
@@ -174,7 +174,6 @@ const CountryCard: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     {continents.map((continent) => (
                       <button
-                        key={continent}
                         onClick={() => handleContinentSelect(continent)}
                         className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
                           selectedContinent === continent

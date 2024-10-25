@@ -20,3 +20,16 @@ export interface Language {
 export interface State {
   name: string;
 }
+
+export interface UnsplashImage {
+  urls: {
+    regular: string;
+  };
+  alt_description: string;
+  user: {
+    name: string;
+    links: {
+      html: string;
+    };
+  };
+}

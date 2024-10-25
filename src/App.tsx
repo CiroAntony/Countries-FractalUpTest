@@ -12,8 +12,8 @@ const App: React.FC = () => {
         <main className="sm:ml-64 p-4">
           <Routes>
             <Route path="/" element={<CountryCard />} />
-            <Route path="/vista1" element={<div>Vista 1</div>} />{" "}
-            <Route path="/vista2" element={<div>Vista 2</div>} />{" "}
+            <Route path="/vista1" element={<div>Vista 1</div>} />
+            <Route path="/vista2" element={<div>Vista 2</div>} />
           </Routes>
         </main>
       </div>
