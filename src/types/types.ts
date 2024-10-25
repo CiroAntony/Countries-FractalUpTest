@@ -1,5 +1,6 @@
 export interface Country {
   name: string;
+  emoji: string;
   continent: Continent;
   capital: string;
   languages: Language[];

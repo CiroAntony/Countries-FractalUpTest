@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_COUNTRIES } from "../graphql/queries";
 import { Country } from "../types/types";
-import { X } from "lucide-react";
+import { X, Search, ChevronDown } from "lucide-react";
 
 const UNSPLASH_ACCESS_KEY = "OXfJlrHssvKavR0Dj7UKnnLK0tRacGT5zDhGDooOclQ";
 
@@ -26,6 +26,22 @@ const CountryCard: React.FC = () => {
   const [selectedContinent, setSelectedContinent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filterRef.current &&
+        !filterRef.current.contains(event.target as Node)
+      ) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchCountryImage = async (countryName: string) => {
     console.log("Iniciando búsqueda para:", countryName);
@@ -87,6 +103,15 @@ const CountryCard: React.FC = () => {
     setSelectedCountry(null);
   };
 
+  const handleContinentSelect = (continent: string) => {
+    setSelectedContinent(continent);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedContinent("");
+  };
+
   React.useEffect(() => {
     if (data?.countries) {
       data.countries.forEach((country: Country) => {
@@ -114,31 +139,86 @@ const CountryCard: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 relative">
-      {/* Filtros */}
-      <div className="mb-6 space-y-4 md:space-y-0 md:flex md:items-center md:space-x-4">
-        <input
-          type="text"
-          placeholder="Buscar país..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full md:w-64 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <select
-          value={selectedContinent}
-          onChange={(e) => setSelectedContinent(e.target.value)}
-          className="w-full md:w-48 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Todos los continentes</option>
-          {continents.map((continent) => (
-            <option key={continent} value={continent}>
-              {continent}
-            </option>
-          ))}
-        </select>
+    <div className="container mx-auto px-4 py-8 relative sm:-mt-11">
+      <div className="mb-6 relative" ref={filterRef}>
+        <div className="relative">
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Buscar país..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => setIsFilterOpen(true)}
+              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <ChevronDown
+                className={`h-5 w-5 transition-transform ${
+                  isFilterOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          </div>
+
+          {isFilterOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-10">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-2">
+                    Filtrar por continente
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {continents.map((continent) => (
+                      <button
+                        key={continent}
+                        onClick={() => handleContinentSelect(continent)}
+                        className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                          selectedContinent === continent
+                            ? "bg-blue-100 text-blue-700"
+                            : "hover:bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {continent}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(selectedContinent || searchTerm) && (
+                  <div className="pt-3 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-2">
+                        {selectedContinent && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700">
+                            {selectedContinent}
+                            <button
+                              onClick={() => setSelectedContinent("")}
+                              className="ml-2 hover:text-blue-800"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={clearFilters}
+                        className="text-sm text-gray-500 hover:text-gray-700"
+                      >
+                        Limpiar filtros
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Grid de países */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCountries.map((country: Country) => (
           <div
@@ -165,28 +245,30 @@ const CountryCard: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="p-4">
-              <h2 className="text-2xl font-bold mb-4 text-blue-600">
-                {country.name}
-              </h2>
-              <div className="space-y-2">
-                <p>{country.continent.name}</p>
+            <div className="flex items-center ">
+              <p className="text-6xl font-bold ml-4">{country.emoji}</p>
+              <div className="p-4">
+                <h2 className="text-4xl font-bold text-blue-600">
+                  {country.name}
+                </h2>
+                <div className="space-y-2">
+                  <p>{country.continent.name}</p>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Sidebar */}
       <div
         className={`fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "translate-x-full"
         } z-50`}
       >
         {selectedCountry && (
-          <div className="h-full overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
+          <div className="h-full flex flex-col">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-blue-600">
                   {selectedCountry.name}
                 </h2>
@@ -197,8 +279,10 @@ const CountryCard: React.FC = () => {
                   <X className="h-6 w-6 text-gray-500" />
                 </button>
               </div>
+            </div>
 
-              <div className="space-y-6">
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-6">
                 {images[selectedCountry.name] && (
                   <div className="rounded-lg overflow-hidden">
                     <img
@@ -207,19 +291,90 @@ const CountryCard: React.FC = () => {
                         images[selectedCountry.name].alt_description ||
                         `Imagen de ${selectedCountry.name}`
                       }
-                      className="w-full h-64 object-cover"
+                      className="w-full h-40 object-cover"
                     />
                   </div>
                 )}
 
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700">
-                      Continente
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Información General
                     </h3>
-                    <p className="text-gray-600">
-                      {selectedCountry.continent.name}
-                    </p>
+                    <dl className="space-y-2">
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Continente
+                        </dt>
+                        <dd className="text-gray-900">
+                          {selectedCountry.continent.name}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Capital
+                        </dt>
+                        <dd className="text-gray-900">
+                          {selectedCountry.capital || "No disponible"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Nombre Nativo
+                        </dt>
+                        <dd className="text-gray-900">
+                          {selectedCountry.native || "No disponible"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Moneda
+                        </dt>
+                        <dd className="text-gray-900">
+                          {selectedCountry.currency || "No disponible"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Idiomas
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCountry.languages?.map((lang) => (
+                        <span
+                          key={lang.name}
+                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                        >
+                          {lang.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Estados
+                    </h3>
+                    <div className="max-h-48 overflow-y-auto pr-2">
+                      {selectedCountry.states?.length > 0 ? (
+                        <ul className="space-y-1">
+                          {selectedCountry.states.map((state) => (
+                            <li
+                              key={state.name}
+                              className="py-1 px-2 hover:bg-gray-100 rounded transition-colors"
+                            >
+                              {state.name}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-500 italic">
+                          Este Pais no cuenta con estados.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -228,7 +383,6 @@ const CountryCard: React.FC = () => {
         )}
       </div>
 
-      {/* Overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
